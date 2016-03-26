@@ -43,32 +43,30 @@ function pushMarkersToList(marker) {
 
     if (needsAlert) {
         drawCircle(marker.getLatLng().lat, marker.getLatLng().lng, 100000.00);
-        console.log("\nfuck you !");
+        sendAlertToRemoteDevice();
     }
 }
 
 function checkPotentialCollisions(curr_lat, curr_lng) {
     console.log("\nScanning the zone for potential collisions");
+    var R = 6372.795477598;     //Radius of the earth kms
 
     for (index = 0; index < markersList.length; index++) {
-        //DEBUG:
-        console.log("\nLatitude difference = " + Math.abs(curr_lat - markersList[index].lat));
-        console.log("\nLongitude difference = " + Math.abs(curr_lng - markersList[index].lng));
-
         var iter = markersList[index];
-        if ((curr_lat == iter.lat) &&
-            (curr_lng == iter.lng)
-           ) {
-            console.log("\nHaven't you collided yet ? Meh !");
-            return false;
-           } else {
-               if ((Math.abs(curr_lat - iter.lat) < 50.00) &&
-                   (Math.abs(curr_lng - iter.lng) < 50.00)) {
-                   console.log("\nAlert! Potential collision detected");
-                    return true;
-               } else return false;
-           }
+        var distance = R * Math.acos(
+            Math.sin(curr_lat) * Math.sin(iter.lat) +
+            Math.cos(curr_lat) * Math.cos(iter.lat) *
+            Math.cos(curr_lng - iter.lng)
+        );
+        console.log("\nObject " + index + " is at distance of : " + distance + " meters ");
+        if (distance == 0)  return false;
+        else if (distance > 1500.0) return false;
+        else return true;
     }
+}
+
+function sendAlertToRemoteDevice() {
+    console.log("\nAttempting to connect to remote device");
 }
 
 function onMapClick(e) {
