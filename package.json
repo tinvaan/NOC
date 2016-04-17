@@ -1,0 +1,14 @@
+{
+  "name": "NetworkOperations",
+  "version": "1.0.0",
+  "description": "Server side management suite for Network Operations",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "R. Harish Navnit",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.13.4"
+  }
+}
