@@ -1,5 +1,10 @@
 /* Embed the map to the webpage */
 
+var socket = io.connect('http://localhost:8080');
+
+/**
+ * Variables to display the main map
+ */
 L.mapbox.projectId = 'rharish.p2i83c48';
 L.mapbox.accessToken = 'pk.eyJ1IjoicmhhcmlzaCIsImEiOiJjaWs4OWl4bGQwMWcydHhrd3ZmczdzN2lsIn0.mCz4ybX25lp0z7-rXXxqiQ';
 
@@ -71,6 +76,7 @@ function sendAlertToRemoteDevice() {
 
 function onMapClick(e) {
     //alert("You clicked " + e.latlng);
+    //socket.emit('mapClick');
     var currLocation_popup = L.popup()
                                 .setLatLng(e.latlng)
                                 .setContent(e.latlng.toString())
