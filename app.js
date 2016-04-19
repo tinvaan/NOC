@@ -24,8 +24,9 @@ app.get('/', function(req, res) {
 });
 
 io.on('connection', function (socket) {
-    socket.on('mapClick', function (e) {
-        console.log(e.latlng);
+    socket.on('mapClick', function (map) {
+        console.log("Object spotted at { "
+                    + map.lat + ", " + map.lng + " }");
     });
     socket.on('disconnect', function () {
         console.log("Connection closed");

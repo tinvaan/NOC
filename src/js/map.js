@@ -76,7 +76,7 @@ function sendAlertToRemoteDevice() {
 
 function onMapClick(e) {
     //alert("You clicked " + e.latlng);
-    //socket.emit('mapClick');
+    socket.emit('mapClick', e.latlng);
     var currLocation_popup = L.popup()
                                 .setLatLng(e.latlng)
                                 .setContent(e.latlng.toString())
