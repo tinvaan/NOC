@@ -1,6 +1,6 @@
 /* Embed the map to the webpage */
 
-var socket = io.connect('http://localhost:8080');
+var socket = io.connect();
 
 /**
  * Variables to display the main map
