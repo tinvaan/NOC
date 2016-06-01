@@ -14,7 +14,11 @@ var mapTiles = L.tileLayer('https://api.mapbox.com/v4/' + L.mapbox.projectId
 });
 var map = L.map('map').addLayer(mapTiles).setView([0.0, 0.0], 2);
 var markersList = [];
+var devicesConnected = 0;
 
+/**
+ * Draws a circle on the map
+ */
 function drawCircle(lat, lng, radius) {
     L.circle([lat, lng], radius, {
        color: 'red',
@@ -23,15 +27,41 @@ function drawCircle(lat, lng, radius) {
    }).addTo(map);
 }
 
-//FIXME: Do not hardcode values
-function drawPolygon() {
-    return L.polygon([
-        [23.509, -0.08],
-        [23.503, -0.06],
-        [23.51, -0.047]
-    ]).addTo(map);
+/**
+ * Draw a polygon on the map
+ * @param: array of latitude and longitude values
+ */
+function drawPolygon(latlngArray) {
+    var polygonPoints = [];
+    for (index = 0; index < latlngArray.length; ++index) {
+        polygonPoints.insert(latlngArray[index].lat, latlngArray[index].lng);
+    }
+    return L.polygon(polygonPoints).addTo(map);
 }
 
+/**
+ * Draw trajectories on the map
+ */
+function drawTrajectory(path) {
+    var pointsList = [];
+    for (index = 0; index < devicesConnected; ++index) {
+        console.log("Current lat = " + path[index].lat);
+        console.log("Current lng = " + path[index].lng);
+        var point = new L.LatLng(path[index].lat, path[index].lng);
+        pointsList.splice(index, 0, point);
+    }
+    var polyLine = new L.Polyline(pointsList, {
+        color: 'red',
+        weight: 3,
+        opacity: 0.5,
+        smoothFactor: 1
+    });
+    polyLine.addTo(map);
+}
+
+/**
+ * Display the current position of devices
+ */
 function showCurrentObjectLocations() {
     console.log("\nObjects spotted at ");
     for (index = 0; index < markersList.length; index++) {
@@ -40,8 +70,13 @@ function showCurrentObjectLocations() {
     }
 }
 
+/**
+ * Keep track of connected devices
+ */
 function pushMarkersToList(marker) {
     markersList.push(marker.getLatLng());
+    ++devicesConnected;
+    if (devicesConnected >= 2) drawTrajectory(markersList);
     showCurrentObjectLocations();
 
     var needsAlert = checkPotentialCollisions(marker.getLatLng().lat, marker.getLatLng().lng);
@@ -52,6 +87,9 @@ function pushMarkersToList(marker) {
     }
 }
 
+/**
+ * Check if any two objects could possibly collide
+ */
 function checkPotentialCollisions(curr_lat, curr_lng) {
     console.log("\nScanning the zone for potential collisions");
     var R = 6372.795477598;     //Radius of the earth kms
@@ -70,10 +108,16 @@ function checkPotentialCollisions(curr_lat, curr_lng) {
     }
 }
 
+/**
+ * Send an alert to the appropriate device
+ */
 function sendAlertToRemoteDevice() {
     console.log("\nAttempting to connect to remote device");
 }
 
+/**
+ * Handle clicks on the map
+ */
 function onMapClick(e) {
     //alert("You clicked " + e.latlng);
     socket.emit('mapClick', e.latlng);
