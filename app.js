@@ -1,7 +1,10 @@
 var path  = require('path');
 var express = require('express');
 var app = express();
-var server = require('http').Server(app);
+//var server = require('http').Server(app);
+var server = app.listen(3000, function() {
+    console.log("App listening on port 3000");
+});
 var io = require('socket.io')(server);
 
 /**
@@ -28,14 +31,13 @@ io.on('connection', function (socket) {
         console.log("Object spotted at { "
                     + map.lat + ", " + map.lng + " }");
     });
+    socket.on('Latitude', function(lat) {
+        console.log("Latitude : " + lat);
+    });
+    socket.on('Longitude', function(lng) {
+        console.log("Longitude : " + lng);
+    });
     socket.on('disconnect', function () {
         console.log("Connection closed");
-    })
-});
-
-app.listen(8080, function() {
-    console.log("App listening on port 8080");
-});
-server.listen(3000, function() {
-     console.log("Server listening on port 3000");
+    });
 });
