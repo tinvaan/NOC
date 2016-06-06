@@ -1,4 +1,7 @@
-/* Embed the map to the webpage */
+/**
+ * Display animations and handle events on the map
+ * Author: R. Harish Navnit<harishnavnit@gmail.com>
+ */
 
 var socket = io.connect();
 
@@ -83,7 +86,7 @@ function pushMarkersToList(marker) {
 
     if (needsAlert) {
         drawCircle(marker.getLatLng().lat, marker.getLatLng().lng, 100000.00);
-        sendAlertToRemoteDevice();
+        sendAlertToRemoteDevice(marker.getLatLng().lat, marker.getLatLng().lng);
     }
 }
 
@@ -94,6 +97,10 @@ function checkPotentialCollisions(curr_lat, curr_lng) {
     console.log("\nScanning the zone for potential collisions");
     var R = 6372.795477598;     //Radius of the earth kms
 
+    /*
+     * If the distance between the coordinates is less than
+     * a certain threshold, sound an alert
+     */
     for (index = 0; index < markersList.length; index++) {
         var iter = markersList[index];
         var distance = R * Math.acos(
@@ -106,12 +113,14 @@ function checkPotentialCollisions(curr_lat, curr_lng) {
         else if (distance > 1500.0) return false;
         else return true;
     }
+    //processMarkers(markersList);
 }
 
 /**
  * Send an alert to the appropriate device
  */
-function sendAlertToRemoteDevice() {
+function sendAlertToRemoteDevice(deviceAtLat, deviceAtLng) {
+    socket.emit("Alert", deviceAtLat, deviceAtLng);
     console.log("\nAttempting to connect to remote device");
 }
 
@@ -129,6 +138,7 @@ function onMapClick(e) {
 
     currLocation_marker.bindPopup(currLocation_popup).openPopup();
     pushMarkersToList(currLocation_marker);
+    processMarkers(markersList);
 }
 
 map.on('click', onMapClick);

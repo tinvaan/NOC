@@ -5,6 +5,8 @@ var server = app.listen(3000, function() {
     console.log("App listening on port 3000");
 });
 var io = require('socket.io')(server);
+var ss = require('simple-statistics');
+var pathjs = require(__dirname + '/src/js' + '/path.js');
 
 /**
  * Middleware to add CORS headers
@@ -36,6 +38,13 @@ io.on('connection', function (socket) {
     socket.on('Longitude', function(lng) {
         console.log("Longitude : " + lng);
     });
+    socket.on('Alert', function(lat, lng) {
+
+    });
+    socket.on('Cartesian Conversion', function(data) {
+        var result = ss.linearRegression(data);
+        console.log("Linear regression = " + result[0]);
+    })
     socket.on('disconnect', function () {
         console.log("Connection closed");
     });
