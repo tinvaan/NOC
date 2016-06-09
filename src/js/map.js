@@ -8,8 +8,8 @@ var socket = io.connect();
 /**
  * Variables to display the main map
  */
-L.mapbox.projectId = 'rharish.p2i83c48';
-L.mapbox.accessToken = 'pk.eyJ1IjoicmhhcmlzaCIsImEiOiJjaWs4OWl4bGQwMWcydHhrd3ZmczdzN2lsIn0.mCz4ybX25lp0z7-rXXxqiQ';
+L.mapbox.projectId = 'project-id';
+L.mapbox.accessToken = 'access-token';
 
 var mapTiles = L.tileLayer('https://api.mapbox.com/v4/' + L.mapbox.projectId
                     + '/{z}/{x}/{y}.png?access_token=' + L.mapbox.accessToken, {
