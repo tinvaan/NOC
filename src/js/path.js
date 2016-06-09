@@ -15,7 +15,6 @@ var cartesianData = [];
  * @param: a list of markers containing {lat, lng} values
  */
 function processMarkers(markers) {
-    console.log("Control reached path.js -- processing the markers");
     var locationObject = [];
     socket.emit('test');
     for (index = 0; index < markers.length; index++) {
@@ -26,6 +25,7 @@ function processMarkers(markers) {
         latlngData.splice(index, 0, locationObject);
         locationObject = [];
     }
+    socket.emit('LatLng data ready', latlngData);
     toCartesianCoordinates(latlngData);
     return latlngData;
 }
@@ -41,8 +41,10 @@ function toCartesianCoordinates(latlngVals) {
     for (index = 0; index < latlngVals.length; index++) {
         var x = R * Math.cos(latlngVals[index][0]) * Math.cos(latlngVals[index][1]);
         var y = R * Math.cos(latlngVals[index][0]) * Math.sin(latlngVals[index][1]);
+        var z = R * Math.sin(latlngVals[index][0]);
         locationObject.splice(0, 0, x);
         locationObject.splice(1, 0, y);
+        locationObject.splice(2, 0, z);
         cartesianData.splice(index, 0, locationObject);
         locationObject = [];
     }
@@ -74,6 +76,15 @@ function initialBearing_degrees(bearing) {
     return bearing.toDegrees();
 }
 
+function showRegressionPoints(pointsList) {
+    console.log(pointsList[0][0]);
+    for (index = 0; index < pointsList.length; ++index) {
+        var point = pointsList[index];
+        for (innerIndex = 0; innerIndex < pointsList.length; ++innerIndex) {
+            console.log("{ " + point[0] + ", " + point[1] + "} ");
+        }
+    }
+}
 function plotRegressionLine() {
 
 }
@@ -103,5 +114,4 @@ function printJSONData() {
 }
 
 function saveToJSON(sourceData, targetFileName) {
-
 }

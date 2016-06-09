@@ -45,21 +45,33 @@ function drawPolygon(latlngArray) {
 /**
  * Draw trajectories on the map
  */
-function drawTrajectory(path) {
+function drawTrajectory(path, lineColor) {
     var pointsList = [];
     for (index = 0; index < devicesConnected; ++index) {
-        console.log("Current lat = " + path[index].lat);
-        console.log("Current lng = " + path[index].lng);
+        //console.log("Current lat = " + path[index].lat);
+        //console.log("Current lng = " + path[index].lng);
         var point = new L.LatLng(path[index].lat, path[index].lng);
         pointsList.splice(index, 0, point);
     }
     var polyLine = new L.Polyline(pointsList, {
-        color: 'red',
+        color: lineColor,
         weight: 3,
         opacity: 0.5,
         smoothFactor: 1
     });
     polyLine.addTo(map);
+}
+
+function predictedLine(pData, lineColor) {
+    console.log("Drawing the linear regression line");
+    var pLine = new L.Polyline(pData, {
+        color: lineColor,
+        weight: 3,
+        opacity: 0.5,
+        smoothFactor: 1
+    });
+    pLine.addTo(map);
+    console.log("Added new line to the map");
 }
 
 /**
@@ -69,7 +81,7 @@ function showCurrentObjectLocations() {
     console.log("\nObjects spotted at ");
     for (index = 0; index < markersList.length; index++) {
         console.log(markersList[index]);
-        console.log("{" + markersList[index].lat + ", " + markersList[index].lng + "}");
+        //console.log("{" + markersList[index].lat + ", " + markersList[index].lng + "}");
     }
 }
 
@@ -79,8 +91,11 @@ function showCurrentObjectLocations() {
 function pushMarkersToList(marker) {
     markersList.push(marker.getLatLng());
     ++devicesConnected;
-    if (devicesConnected >= 2) drawTrajectory(markersList);
-    showCurrentObjectLocations();
+    if (devicesConnected >= 2) drawTrajectory(markersList, 'red');
+    if (devicesConnected % 5 == 0) {
+        showCurrentObjectLocations();
+        processMarkers(markersList);
+    }
 
     var needsAlert = checkPotentialCollisions(marker.getLatLng().lat, marker.getLatLng().lng);
 
@@ -94,7 +109,7 @@ function pushMarkersToList(marker) {
  * Check if any two objects could possibly collide
  */
 function checkPotentialCollisions(curr_lat, curr_lng) {
-    console.log("\nScanning the zone for potential collisions");
+    //console.log("\nScanning the zone for potential collisions");
     var R = 6372.795477598;     //Radius of the earth kms
 
     /*
@@ -108,7 +123,7 @@ function checkPotentialCollisions(curr_lat, curr_lng) {
             Math.cos(curr_lat) * Math.cos(iter.lat) *
             Math.cos(curr_lng - iter.lng)
         );
-        console.log("\nObject " + index + " is at distance of : " + distance + " meters ");
+        //console.log("\nObject " + index + " is at distance of : " + distance + " meters ");
         if (distance == 0)  return false;
         else if (distance > 1500.0) return false;
         else return true;
@@ -138,7 +153,19 @@ function onMapClick(e) {
 
     currLocation_marker.bindPopup(currLocation_popup).openPopup();
     pushMarkersToList(currLocation_marker);
-    processMarkers(markersList);
 }
+
+socket.on('Regression computed', function(regResult) {
+    showRegressionPoints(regResult);
+});
+/**
+ * Draw a line through the points in @param
+ * @param: [[lat,lng] ... [lat,lng]]
+ */
+socket.on('Global line', function(globalData) {
+    predictedLine(globalData, 'yellow');
+});
+socket.on('Cartesian line', function(cartesianData){
+});
 
 map.on('click', onMapClick);

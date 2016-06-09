@@ -41,10 +41,37 @@ io.on('connection', function (socket) {
     socket.on('Alert', function(lat, lng) {
 
     });
+
+    /**
+     * Predict the next set of global points using linear regression
+     * @param:[ [Lat,Lng] ... [Lat, Lng] ] data
+     */
+    socket.on('LatLng data ready', function(data) {
+        var result = ss.linearRegression(data);
+        var line = ss.linearRegressionLine(result);
+        var latLng = [], latLngList = [];
+        for (index = 0; index < data.length; index++) {
+            latLng.splice(0, 0, data[index][0]);
+            latLng.splice(1, 0, line(index));
+            latLngList.splice(index, 0, latLng);
+            latLng = [];
+        }
+        //console.log("Regression points on global coordinates ... ");
+        //socket.emit('Regression computed', result);
+        socket.emit('Global line', latLngList);
+    });
+
+    /**
+     * Predict the next set of cartesian points using linear regression
+     * @param: [ [x,y] ... [x,y] ] coordinate data
+     */
     socket.on('Cartesian Conversion', function(data) {
         var result = ss.linearRegression(data);
-        console.log("Linear regression = " + result[0]);
-    })
+        //console.log("Regression points on cartesian coordinates ...");
+        //socket.emit('Regression computed', result);
+        //socket.emit('Cartesian line', result);
+    });
+
     socket.on('disconnect', function () {
         console.log("Connection closed");
     });
