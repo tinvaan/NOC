@@ -162,8 +162,8 @@ socket.on('Regression computed', function(regResult) {
  * Draw a line through the points in @param
  * @param: [[lat,lng] ... [lat,lng]]
  */
-socket.on('Global line', function(globalData) {
-    predictedLine(globalData, 'yellow');
+socket.on('Global line', function(globalLine) {
+    predictedLine(globalLine, 'yellow');
 });
 socket.on('Cartesian line', function(cartesianData){
 });

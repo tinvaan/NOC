@@ -46,19 +46,25 @@ io.on('connection', function (socket) {
      * Predict the next set of global points using linear regression
      * @param:[ [Lat,Lng] ... [Lat, Lng] ] data
      */
-    socket.on('LatLng data ready', function(data) {
-        var result = ss.linearRegression(data);
-        var line = ss.linearRegressionLine(result);
-        var latLng = [], latLngList = [];
-        for (index = 0; index < data.length; index++) {
-            latLng.splice(0, 0, data[index][0]);
-            latLng.splice(1, 0, line(index));
-            latLngList.splice(index, 0, latLng);
-            latLng = [];
-        }
+    socket.on('LatLng data ready', function(coordinates) {
+        var regression = ss.linearRegression(coordinates);
+        var regressionFunction = ss.linearRegressionLine(regression);
+
+        // Set up the starting and ending X coordinates
+        var regressionStartX = coordinates[0][0];
+        var regressionEndX = coordinates[coordinates.length - 1][0];
+
+        // Calculate the starting and ending Y coordinates
+        var regressionStartY = regressionFunction(regressionStartX);
+        var regressionEndY = regressionFunction(regressionEndX);
+
+        var regressionLine = [
+            [regressionStartX, regressionStartY],
+            [regressionEndX, regressionEndY]
+        ];
         //console.log("Regression points on global coordinates ... ");
         //socket.emit('Regression computed', result);
-        socket.emit('Global line', latLngList);
+        socket.emit('Global line', regressionLine);
     });
 
     /**
