@@ -32,11 +32,8 @@ io.on('connection', function (socket) {
         console.log("Object spotted at { "
                     + map.lat + ", " + map.lng + " }");
     });
-    socket.on('Latitude', function(lat) {
-        console.log("Latitude : " + lat);
-    });
-    socket.on('Longitude', function(lng) {
-        console.log("Longitude : " + lng);
+    socket.on('Device Located', function(lat, lng) {
+        console.log("Device at : [" + lat + ", " + lng + "]");
     });
     socket.on('Alert', function(lat, lng) {
 
