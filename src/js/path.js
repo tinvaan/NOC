@@ -85,6 +85,7 @@ function showRegressionPoints(pointsList) {
         }
     }
 }
+
 function plotRegressionLine() {
 
 }

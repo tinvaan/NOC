@@ -27,29 +27,50 @@ app.get('/', function(req, res) {
     app.use(express.static('src'));
 });
 
+/**
+ * Handle socketio events
+ */
 io.on('connection', function (socket) {
     socket.on('mapClick', function (map) {
         console.log("Object spotted at { "
                     + map.lat + ", " + map.lng + " }");
     });
-    socket.on('Device Located', function(lat, lng) {
-        console.log("Device at : [" + lat + ", " + lng + "]");
-    });
-    socket.on('Alert', function(lat, lng) {
 
+    /**
+     * Called when the location of a device is available
+     */
+    socket.on('Device Located', function(lat, lng) {
+        // Debug information
+        console.log("Device at : [" + lat + ", " + lng + "]");
+
+        // Store {lat,lng} data in an array
+        var location = [];
+        location.splice(0, 0, lat);
+        location.splice(1, 0, lng);
+
+        // Emit the location to be plotted on the map
+        socket.emit('Device location changed', location);
+    });
+
+    /**
+     * Display an alert to at {lat,lng} if an
+     * alert for {lat,lng} is received
+     */
+    socket.on('Alert', function(lat, lng) {
+        socket.emit('Alert animation', lat, lng);
     });
 
     /**
      * Predict the next set of global points using linear regression
      * @param:[ [Lat,Lng] ... [Lat, Lng] ] data
      */
-    socket.on('LatLng data ready', function(coordinates) {
-        var regression = ss.linearRegression(coordinates);
+    socket.on('LatLng data ready', function(remoteCoordinates) {
+        var regression = ss.linearRegression(remoteCoordinates);
         var regressionFunction = ss.linearRegressionLine(regression);
 
         // Set up the starting and ending X coordinates
-        var regressionStartX = coordinates[0][0];
-        var regressionEndX = coordinates[coordinates.length - 1][0];
+        var regressionStartX = remoteCoordinates[0][0];
+        var regressionEndX = remoteCoordinates[remoteCoordinates.length - 1][0];
 
         // Calculate the starting and ending Y coordinates
         var regressionStartY = regressionFunction(regressionStartX);
@@ -62,17 +83,6 @@ io.on('connection', function (socket) {
         //console.log("Regression points on global coordinates ... ");
         //socket.emit('Regression computed', result);
         socket.emit('Global line', regressionLine);
-    });
-
-    /**
-     * Predict the next set of cartesian points using linear regression
-     * @param: [ [x,y] ... [x,y] ] coordinate data
-     */
-    socket.on('Cartesian Conversion', function(data) {
-        var result = ss.linearRegression(data);
-        //console.log("Regression points on cartesian coordinates ...");
-        //socket.emit('Regression computed', result);
-        //socket.emit('Cartesian line', result);
     });
 
     socket.on('disconnect', function () {

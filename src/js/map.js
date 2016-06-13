@@ -17,6 +17,7 @@ var mapTiles = L.tileLayer('https://api.mapbox.com/v4/' + L.mapbox.projectId
 });
 var map = L.map('map').addLayer(mapTiles).setView([0.0, 0.0], 2);
 var markersList = [];
+var remoteMarkersList = [];
 var devicesConnected = 0;
 
 /**
@@ -92,7 +93,7 @@ function pushMarkersToList(marker) {
     markersList.push(marker.getLatLng());
     ++devicesConnected;
     if (devicesConnected >= 2) drawTrajectory(markersList, 'red');
-    if (devicesConnected % 5 == 0) {
+    if (devicesConnected % 10 == 0) {
         showCurrentObjectLocations();
         processMarkers(markersList);
     }
@@ -140,6 +141,16 @@ function sendAlertToRemoteDevice(deviceAtLat, deviceAtLng) {
 }
 
 /**
+ * Store the locations of the remote devices in an array
+ */
+function storeRemoteLocations(rlat, rlng) {
+    var rLatLng = L.latLng(rlat, rlng);
+    var remoteMarker = L.marker(rlatLng).setLatLng(rlatLng).addTo(map);
+    remoteMarkersList.push(remoteMarker);
+    //socket.emit('LatLng data ready', remoteMarkersList);
+}
+
+/**
  * Handle clicks on the map
  */
 function onMapClick(e) {
@@ -155,6 +166,16 @@ function onMapClick(e) {
     pushMarkersToList(currLocation_marker);
 }
 
+/**
+ * Emitted when the location of a device changes
+ */
+socket.on('Device location changed', function(locArray) {
+    console.log("A remote device was spotted at [" + 
+                locArray[0] + ", " + locArray[1] + "] ");
+});
+socket.on('Alert animation', function(lat, lng) {
+    drawCircle(lat, lng, 30);
+});
 socket.on('Regression computed', function(regResult) {
     showRegressionPoints(regResult);
 });
@@ -164,8 +185,6 @@ socket.on('Regression computed', function(regResult) {
  */
 socket.on('Global line', function(globalLine) {
     predictedLine(globalLine, 'yellow');
-});
-socket.on('Cartesian line', function(cartesianData){
 });
 
 map.on('click', onMapClick);
