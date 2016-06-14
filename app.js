@@ -6,7 +6,8 @@ var server = app.listen(3000, function() {
 });
 var io = require('socket.io')(server);
 var ss = require('simple-statistics');
-var pathjs = require(__dirname + '/src/js' + '/path.js');
+var alert  = require(__dirname + '/alert.js'),
+    pathjs = require(__dirname + '/src/js' + '/path.js');
 
 /**
  * Middleware to add CORS headers
@@ -40,24 +41,13 @@ io.on('connection', function (socket) {
      * Called when the location of a device is available
      */
     socket.on('Device Located', function(lat, lng) {
-        // Debug information
-        console.log("Device at : [" + lat + ", " + lng + "]");
-
-        // Store {lat,lng} data in an array
-        var location = [];
-        location.splice(0, 0, lat);
-        location.splice(1, 0, lng);
-
-        // Emit the location to be plotted on the map
-        socket.emit('Device location changed', location);
-    });
-
-    /**
-     * Display an alert to at {lat,lng} if an
-     * alert for {lat,lng} is received
-     */
-    socket.on('Alert', function(lat, lng) {
-        socket.emit('Alert animation', lat, lng);
+        var locationAdded = alert.newLocation(lat, lng);
+        if (locationAdded) {
+            if ( alert.proximity(lat, lng) ) {
+                socket.emit('Alert');
+                socket.emit('Alert animation', lat, lng);
+            }
+        }
     });
 
     /**
@@ -65,27 +55,16 @@ io.on('connection', function (socket) {
      * @param:[ [Lat,Lng] ... [Lat, Lng] ] data
      */
     socket.on('LatLng data ready', function(remoteCoordinates) {
-        var regression = ss.linearRegression(remoteCoordinates);
-        var regressionFunction = ss.linearRegressionLine(regression);
+        alert.reg(remoteCoordinates);
+        //socket.emit('Global line', regressionLine);
+    });
 
-        // Set up the starting and ending X coordinates
-        var regressionStartX = remoteCoordinates[0][0];
-        var regressionEndX = remoteCoordinates[remoteCoordinates.length - 1][0];
-
-        // Calculate the starting and ending Y coordinates
-        var regressionStartY = regressionFunction(regressionStartX);
-        var regressionEndY = regressionFunction(regressionEndX);
-
-        var regressionLine = [
-            [regressionStartX, regressionStartY],
-            [regressionEndX, regressionEndY]
-        ];
-        //console.log("Regression points on global coordinates ... ");
-        //socket.emit('Regression computed', result);
-        socket.emit('Global line', regressionLine);
+    socket.on('Alert', function() {
+        console.log("Alert situation. Expecting remote device to respond");
     });
 
     socket.on('disconnect', function () {
         console.log("Connection closed");
+        alert.print();
     });
 });
