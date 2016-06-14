@@ -17,8 +17,8 @@ var mapTiles = L.tileLayer('https://api.mapbox.com/v4/' + L.mapbox.projectId
 });
 var map = L.map('map').addLayer(mapTiles).setView([0.0, 0.0], 2);
 var markersList = [];
-var remoteMarkersList = [];
-var devicesConnected = 0;
+var remoteDevicesLocation = [];
+
 
 /**
  * Draws a circle on the map
@@ -49,8 +49,6 @@ function drawPolygon(latlngArray) {
 function drawTrajectory(path, lineColor) {
     var pointsList = [];
     for (index = 0; index < devicesConnected; ++index) {
-        //console.log("Current lat = " + path[index].lat);
-        //console.log("Current lng = " + path[index].lng);
         var point = new L.LatLng(path[index].lat, path[index].lng);
         pointsList.splice(index, 0, point);
     }
@@ -91,19 +89,8 @@ function showCurrentObjectLocations() {
  */
 function pushMarkersToList(marker) {
     markersList.push(marker.getLatLng());
-    ++devicesConnected;
-    if (devicesConnected >= 2) drawTrajectory(markersList, 'red');
-    if (devicesConnected % 10 == 0) {
-        showCurrentObjectLocations();
-        processMarkers(markersList);
-    }
-
-    var needsAlert = checkPotentialCollisions(marker.getLatLng().lat, marker.getLatLng().lng);
-
-    if (needsAlert) {
-        drawCircle(marker.getLatLng().lat, marker.getLatLng().lng, 100000.00);
-        sendAlertToRemoteDevice(marker.getLatLng().lat, marker.getLatLng().lng);
-    }
+    showCurrentObjectLocations();
+    processMarkers(markersList);
 }
 
 /**
@@ -167,11 +154,62 @@ function onMapClick(e) {
 }
 
 /**
+ * Problem here is that when more than one devices starts
+ * emitting data, there's no way to recognize which location
+ * object corresponds to which device.
+ * Possible solutions:
+ *  1. Implment a login feature on the Android side and emit
+ *     Username/Password along with the location
+ *  2. Just assign a hashcode to each device, needs to be done
+ *     on the android side again, and send it along with the
+ *     location of the device
+ */
+socket.on('Device located', function(nick, lat, lng, timestamp) {
+    console.log("A new device was located");
+
+    // Variables to hold incoming data
+    var entry        = [],
+        location     = [],
+        namedDevices = new Map();
+
+    // Create a location object, holding the incoming lat/longs
+    location.splice(0, 0, lat); location.splice(1, 0, lng);
+
+    // Push this location to a set of lat/longs
+    entry.push(location);
+
+    if (!namedDevices.has(nick)) {
+        // Assign the created set of lat/longs to the device nick
+        namedDevices.set(nick, entry);
+    } else {
+        // Find the locations corresponding to the nick
+        var valueEntry = namedDevices.get(nick);
+
+        /* Check if the previous element in the list is not the
+         * same as the current location
+         */
+        if (valueEntry[valueEntry.length - 1] != location) {
+            // Add the new location to the end of the list
+            valueEntry.splice((valueEntry.length - 1), 0, location);
+            namedDevices.set(nick, valueEntry);
+        }
+    }
+
+    // Clear the location and entry objects
+    entry = [], location = [];
+});
+
+/**
  * Emitted when the location of a device changes
  */
 socket.on('Device location changed', function(locArray) {
-    console.log("A remote device was spotted at [" + 
+    console.log("A remote device was spotted at [" +
                 locArray[0] + ", " + locArray[1] + "] ");
+
+    if (checkPotentialCollisions(locArray[0], locArray[1])) {
+        drawCircle(locArray[0], locArray[1], 100000.00);
+        sendAlertToRemoteDevice(locArray[0], locArray[1]);
+    }
 });
 socket.on('Alert animation', function(lat, lng) {
     drawCircle(lat, lng, 30);

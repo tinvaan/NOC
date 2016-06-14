@@ -12,6 +12,7 @@ var cartesianData = [];
 
 /**
  * Extract the latitude and longitude from a list of markers
+ * Stores the {lat,lng} data in simple array format
  * @param: a list of markers containing {lat, lng} values
  */
 function processMarkers(markers) {
@@ -26,7 +27,7 @@ function processMarkers(markers) {
         locationObject = [];
     }
     socket.emit('LatLng data ready', latlngData);
-    toCartesianCoordinates(latlngData);
+    //toCartesianCoordinates(latlngData);
     return latlngData;
 }
 
